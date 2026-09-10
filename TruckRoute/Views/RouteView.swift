@@ -57,9 +57,12 @@ struct RouteView: View {
             }
             .alert(
                 "Couldn't plan the route",
-                isPresented: .constant(planner.errorMessage != nil)
+                isPresented: Binding(
+                    get: { planner.errorMessage != nil },
+                    set: { if !$0 { planner.dismissError() } }
+                )
             ) {
-                Button("OK") { planner.clear() }
+                Button("OK") { }
             } message: {
                 Text(planner.errorMessage ?? "")
             }
@@ -117,6 +120,10 @@ private struct RouteSummary: View {
             if let total = route.totalRate, let perMile = route.ratePerMile {
                 Text("\(Format.money(total)) · \(Format.perMile(perMile)) all miles")
                     .fontWeight(.semibold)
+            }
+            if route.unmeasuredLegs > 0 {
+                Text("\(route.unmeasuredLegs) leg\(route.unmeasuredLegs == 1 ? "" : "s") couldn't be measured, so these totals are low.")
+                    .foregroundStyle(.orange)
             }
         }
     }

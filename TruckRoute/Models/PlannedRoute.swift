@@ -2,6 +2,8 @@ import Foundation
 import CoreLocation
 import MapKit
 
+let metersPerMile: CLLocationDistance = 1609.344
+
 enum StopKind {
     case start
     case pickup
@@ -49,7 +51,7 @@ struct RouteStop: Identifiable {
     /// owner-operators judge a load.
     var ratePerMile: Double? {
         guard let loadRate, let allMiles, allMiles > 0 else { return nil }
-        return loadRate / (allMiles / 1609.344)
+        return loadRate / (allMiles / metersPerMile)
     }
 }
 
@@ -86,6 +88,13 @@ struct PlannedRoute {
         stops.filter(\.isDeadheadLeg).compactMap(\.distance).reduce(0, +)
     }
 
+    /// Legs MapKit couldn't measure. Any of these means the mileage and the
+    /// rate per mile below are understated, so the route says so rather than
+    /// quietly reporting a number that's too good.
+    var unmeasuredLegs: Int {
+        stops.dropFirst().filter { $0.distance == nil }.count
+    }
+
     var deadheadShare: Double? {
         guard totalDistance > 0 else { return nil }
         return emptyDistance / totalDistance
@@ -100,6 +109,6 @@ struct PlannedRoute {
     /// Revenue over every mile of the route, empty ones included.
     var ratePerMile: Double? {
         guard let totalRate, totalDistance > 0 else { return nil }
-        return totalRate / (totalDistance / 1609.344)
+        return totalRate / (totalDistance / metersPerMile)
     }
 }

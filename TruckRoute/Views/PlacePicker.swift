@@ -7,6 +7,7 @@ struct PlacePicker: View {
     @Binding var selection: Place?
 
     @Query(sort: \Place.name) private var places: [Place]
+    @Environment(\.dismiss) private var dismiss
     @State private var isAdding = false
 
     var body: some View {
@@ -21,6 +22,7 @@ struct PlacePicker: View {
             ForEach(places) { place in
                 Button {
                     selection = place
+                    dismiss()
                 } label: {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {

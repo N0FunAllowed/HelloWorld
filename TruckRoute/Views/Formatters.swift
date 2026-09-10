@@ -1,10 +1,18 @@
 import Foundation
 
 enum Format {
+    /// Always miles, never the locale's road units: rate per mile is the
+    /// number this app is built around, and a distance in kilometres next to
+    /// a "/mi" figure is worse than untranslated.
     static func miles(_ meters: Double) -> String {
-        let measurement = Measurement(value: meters, unit: UnitLength.meters)
-        return measurement.formatted(
-            .measurement(width: .abbreviated, usage: .road)
+        let miles = Measurement(value: meters, unit: UnitLength.meters)
+            .converted(to: .miles)
+        return miles.formatted(
+            .measurement(
+                width: .abbreviated,
+                usage: .asProvided,
+                numberFormatStyle: .number.precision(.fractionLength(0))
+            )
         )
     }
 

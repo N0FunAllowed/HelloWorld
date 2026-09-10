@@ -135,6 +135,10 @@ final class RoutePlanner {
         errorMessage = nil
     }
 
+    func dismissError() {
+        errorMessage = nil
+    }
+
     /// Geocodes a place once and caches the result on it, so replanning and
     /// other loads using the same place cost nothing.
     private func resolveCoordinate(for place: Place) async throws -> CLLocationCoordinate2D {
@@ -154,16 +158,10 @@ final class RoutePlanner {
         for index in working.stops.indices.dropFirst() {
             progressNote = "Measuring leg \(index) of \(working.stops.count - 1)…"
 
-            let request = MKDirections.Request()
-            request.source = MKMapItem(
-                placemark: MKPlacemark(coordinate: working.stops[index - 1].coordinate)
-            )
-            request.destination = MKMapItem(
-                placemark: MKPlacemark(coordinate: working.stops[index].coordinate)
-            )
-            request.transportType = .automobile
-
-            if let leg = try? await MKDirections(request: request).calculate().routes.first {
+            if let leg = await drivingRoute(
+                from: working.stops[index - 1].coordinate,
+                to: working.stops[index].coordinate
+            ) {
                 working.stops[index].travelTime = leg.expectedTravelTime
                 working.stops[index].distance = leg.distance
                 working.stops[index].polyline = leg.polyline
@@ -180,6 +178,30 @@ final class RoutePlanner {
             working.stops[index].allMiles = loaded + empty
         }
         route = working
+    }
+
+    /// MapKit throttles directions requests and starts refusing them when they
+    /// come back to back, which would silently drop legs and understate both
+    /// the miles and the rate per mile. Space them out, and give a refused
+    /// request one more try before giving up on the leg.
+    private func drivingRoute(
+        from source: CLLocationCoordinate2D,
+        to destination: CLLocationCoordinate2D
+    ) async -> MKRoute? {
+        for attempt in 0..<2 {
+            if attempt > 0 {
+                try? await Task.sleep(for: .seconds(1))
+            }
+            let request = MKDirections.Request()
+            request.source = MKMapItem(placemark: MKPlacemark(coordinate: source))
+            request.destination = MKMapItem(placemark: MKPlacemark(coordinate: destination))
+            request.transportType = .automobile
+
+            if let leg = try? await MKDirections(request: request).calculate().routes.first {
+                return leg
+            }
+        }
+        return nil
     }
 
     private func distance(
