@@ -7,7 +7,25 @@ Just learning how to use Git and Swift
 ## TruckRoute
 
 A dead-simple iOS app for scheduling and routing a week of trucking loads.
-Open `TruckRoute.xcodeproj` in Xcode 16 or later and run on iOS 17+.
+Needs Xcode 16 or later and targets iOS 17+.
+
+### Running it
+
+Either open `TruckRoute.xcodeproj` in Xcode and press Run, or from a terminal:
+
+```sh
+./run.sh                  # first available iPhone simulator
+./run.sh "iPhone 17 Pro"  # or name one
+```
+
+The script builds, boots the simulator, installs and launches. No signing
+setup is needed for the simulator. Running on a physical iPhone does need a
+signing team and a bundle identifier of your own, set on the target's Signing
+& Capabilities tab.
+
+Set a home base address under Settings before planning a route — addresses are
+geocoded against Apple's live service, so use real ones and expect about a
+second per address.
 
 ### What it does
 
