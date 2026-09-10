@@ -2,8 +2,6 @@ import Foundation
 import CoreLocation
 import MapKit
 
-let metersPerMile: CLLocationDistance = 1609.344
-
 enum StopKind {
     case start
     case pickup
@@ -47,11 +45,11 @@ struct RouteStop: Identifiable {
     /// they're what separates a good rate from a bad one.
     var isDeadheadLeg: Bool { kind == .pickup || kind == .end }
 
-    /// Rate per mile measured against all miles, loaded and empty, which is how
-    /// owner-operators judge a load.
-    var ratePerMile: Double? {
+    /// Rate per unit measured against every mile driven for this load, loaded
+    /// and empty, which is how owner-operators judge one.
+    func rate(per unit: DistanceUnit) -> Double? {
         guard let loadRate, let allMiles, allMiles > 0 else { return nil }
-        return loadRate / (allMiles / metersPerMile)
+        return loadRate / (allMiles / unit.metersPerUnit)
     }
 }
 
@@ -107,8 +105,8 @@ struct PlannedRoute {
     }
 
     /// Revenue over every mile of the route, empty ones included.
-    var ratePerMile: Double? {
+    func rate(per unit: DistanceUnit) -> Double? {
         guard let totalRate, totalDistance > 0 else { return nil }
-        return totalRate / (totalDistance / metersPerMile)
+        return totalRate / (totalDistance / unit.metersPerUnit)
     }
 }

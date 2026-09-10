@@ -3,18 +3,20 @@ import XCTest
 @testable import TruckRoute
 
 final class PlannedRouteTests: XCTestCase {
+    private let mile = DistanceUnit.miles.metersPerUnit
+
     /// A day that runs 10 empty miles to a pickup, 100 loaded to the drop-off,
     /// then 50 empty back to the yard.
     private func sampleRoute(rate: Double? = nil) -> PlannedRoute {
         var pickup = stop(.pickup, rate: rate)
-        pickup.distance = 10 * metersPerMile
+        pickup.distance = 10 * mile
 
         var dropoff = stop(.dropoff, rate: rate)
-        dropoff.distance = 100 * metersPerMile
-        dropoff.allMiles = 110 * metersPerMile
+        dropoff.distance = 100 * mile
+        dropoff.allMiles = 110 * mile
 
         var home = stop(.end)
-        home.distance = 50 * metersPerMile
+        home.distance = 50 * mile
 
         return PlannedRoute(stops: [stop(.start), pickup, dropoff, home])
     }
@@ -32,11 +34,11 @@ final class PlannedRouteTests: XCTestCase {
     }
 
     func testLoadedMilesCountOnlyLegsIntoADropOff() {
-        XCTAssertEqual(sampleRoute().loadedDistance / metersPerMile, 100, accuracy: 0.001)
+        XCTAssertEqual(sampleRoute().loadedDistance / mile, 100, accuracy: 0.001)
     }
 
     func testEmptyMilesIncludeTheRunToPickupAndTheRunHome() {
-        XCTAssertEqual(sampleRoute().emptyDistance / metersPerMile, 60, accuracy: 0.001)
+        XCTAssertEqual(sampleRoute().emptyDistance / mile, 60, accuracy: 0.001)
     }
 
     func testDeadheadShareIsEmptyMilesOverEveryMile() {
@@ -46,12 +48,20 @@ final class PlannedRouteTests: XCTestCase {
     func testRatePerMileIsMeasuredOverEmptyMilesToo() throws {
         // $1,000 over 160 miles driven, not the 100 loaded ones.
         let route = sampleRoute(rate: 1000)
-        XCTAssertEqual(try XCTUnwrap(route.ratePerMile), 6.25, accuracy: 0.001)
+        XCTAssertEqual(try XCTUnwrap(route.rate(per: .miles)), 6.25, accuracy: 0.001)
+    }
+
+    func testRatePerKilometerIsTheSameMoneyOverMoreUnits() throws {
+        let route = sampleRoute(rate: 1000)
+        let perKm = try XCTUnwrap(route.rate(per: .kilometers))
+        XCTAssertEqual(perKm, 1000.0 / (160 * mile / 1000), accuracy: 0.001)
+        // A rate per km is necessarily the smaller number.
+        XCTAssertLessThan(perKm, try XCTUnwrap(route.rate(per: .miles)))
     }
 
     func testLoadRatePerMileIncludesItsOwnDeadhead() throws {
         let dropoff = try XCTUnwrap(sampleRoute(rate: 1000).stops.first { $0.kind == .dropoff })
-        XCTAssertEqual(try XCTUnwrap(dropoff.ratePerMile), 1000.0 / 110.0, accuracy: 0.001)
+        XCTAssertEqual(try XCTUnwrap(dropoff.rate(per: .miles)), 1000.0 / 110.0, accuracy: 0.001)
     }
 
     func testTotalRateCountsEachLoadOnceRatherThanPerStop() throws {
@@ -61,7 +71,7 @@ final class PlannedRouteTests: XCTestCase {
 
     func testRateIsNilWhenNoLoadHasOne() {
         XCTAssertNil(sampleRoute().totalRate)
-        XCTAssertNil(sampleRoute().ratePerMile)
+        XCTAssertNil(sampleRoute().rate(per: .miles))
     }
 
     func testWorkingStopCountExcludesTheYardAtBothEnds() {
@@ -78,7 +88,7 @@ final class PlannedRouteTests: XCTestCase {
         let empty = PlannedRoute()
         XCTAssertEqual(empty.totalDistance, 0)
         XCTAssertNil(empty.deadheadShare)
-        XCTAssertNil(empty.ratePerMile)
+        XCTAssertNil(empty.rate(per: .miles))
         XCTAssertEqual(empty.workingStopCount, 0)
     }
 }

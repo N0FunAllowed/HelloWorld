@@ -5,6 +5,7 @@ import MapKit
 struct RouteView: View {
     @Query(sort: \Load.pickupDate) private var loads: [Load]
     @Query private var places: [Place]
+    @AppStorage(DistanceUnit.storageKey) private var unit = DistanceUnit.miles
     @State private var planner = RoutePlanner()
 
     private var homeBase: Place? {
@@ -79,12 +80,12 @@ struct RouteView: View {
 
             Section {
                 ForEach(Array(route.stops.enumerated()), id: \.element.id) { index, stop in
-                    RouteStopRow(index: index, stop: stop)
+                    RouteStopRow(index: index, stop: stop, unit: unit)
                 }
             } header: {
                 Text("\(route.workingStopCount) stops")
             } footer: {
-                RouteSummary(route: route)
+                RouteSummary(route: route, unit: unit)
             }
 
             if !route.skipped.isEmpty {
@@ -110,15 +111,16 @@ struct RouteView: View {
 
 private struct RouteSummary: View {
     let route: PlannedRoute
+    let unit: DistanceUnit
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text("\(Format.miles(route.totalDistance)) · \(Format.duration(route.totalTravelTime)) driving")
+            Text("\(Format.distance(route.totalDistance, in: unit)) · \(Format.duration(route.totalTravelTime)) driving")
             if route.emptyDistance > 0, let share = route.deadheadShare {
-                Text("\(Format.miles(route.loadedDistance)) loaded · \(Format.miles(route.emptyDistance)) empty (\(Format.percent(share)) deadhead)")
+                Text("\(Format.distance(route.loadedDistance, in: unit)) loaded · \(Format.distance(route.emptyDistance, in: unit)) empty (\(Format.percent(share)) deadhead)")
             }
-            if let total = route.totalRate, let perMile = route.ratePerMile {
-                Text("\(Format.money(total)) · \(Format.perMile(perMile)) all miles")
+            if let total = route.totalRate, let perUnit = route.rate(per: unit) {
+                Text("\(Format.money(total)) · \(Format.rate(perUnit, per: unit)) loaded + empty")
                     .fontWeight(.semibold)
             }
             if route.unmeasuredLegs > 0 {
@@ -132,6 +134,7 @@ private struct RouteSummary: View {
 private struct RouteStopRow: View {
     let index: Int
     let stop: RouteStop
+    let unit: DistanceUnit
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -139,9 +142,9 @@ private struct RouteStopRow: View {
                 HStack(spacing: 4) {
                     if stop.isDeadheadLeg {
                         Image(systemName: "arrow.right.to.line")
-                        Text("Empty \(Format.miles(distance)) · \(Format.duration(travelTime))")
+                        Text("Empty \(Format.distance(distance, in: unit)) · \(Format.duration(travelTime))")
                     } else {
-                        Text("Loaded \(Format.miles(distance)) · \(Format.duration(travelTime))")
+                        Text("Loaded \(Format.distance(distance, in: unit)) · \(Format.duration(travelTime))")
                     }
                 }
                 .font(.caption)
@@ -173,7 +176,7 @@ private struct RouteStopRow: View {
                             .foregroundStyle(.secondary)
                     }
                     if let rate = stop.loadRate, stop.kind == .dropoff {
-                        Text(stop.ratePerMile.map { "\(Format.money(rate)) · \(Format.perMile($0))" }
+                        Text(stop.rate(per: unit).map { "\(Format.money(rate)) · \(Format.rate($0, per: unit))" }
                             ?? Format.money(rate))
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.green)
