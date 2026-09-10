@@ -19,7 +19,8 @@ Either open `TruckRoute.xcodeproj` in Xcode and press Run, or from a terminal:
 ```
 
 The script builds, boots the simulator, installs and launches. No signing
-setup is needed for the simulator. Running on a physical iPhone does need a
+setup is needed for the simulator. `TruckRouteTests` covers the mileage and
+rate-per-mile math and runs on every push. Running on a physical iPhone does need a
 signing team and a bundle identifier of your own, set on the target's Signing
 & Capabilities tab.
 
