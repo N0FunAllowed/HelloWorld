@@ -6,12 +6,14 @@ enum StopKind {
     case start
     case pickup
     case dropoff
+    case end
 
     var label: String {
         switch self {
         case .start: "Start"
         case .pickup: "Pick up"
         case .dropoff: "Drop off"
+        case .end: "Back to yard"
         }
     }
 }
@@ -38,10 +40,10 @@ struct RouteStop: Identifiable {
     /// measured.
     var allMiles: CLLocationDistance?
 
-    /// The leg arriving here is empty — the truck is running to a pickup with
-    /// nothing on it. Empty miles earn nothing, so they're what separates a
-    /// good rate from a bad one.
-    var isDeadheadLeg: Bool { kind == .pickup }
+    /// The leg arriving here is empty — running to a pickup with nothing on,
+    /// or heading home after the last drop. Empty miles earn nothing, so
+    /// they're what separates a good rate from a bad one.
+    var isDeadheadLeg: Bool { kind == .pickup || kind == .end }
 
     /// Rate per mile measured against all miles, loaded and empty, which is how
     /// owner-operators judge a load.
@@ -62,6 +64,11 @@ struct SkippedLoad: Identifiable {
 struct PlannedRoute {
     var stops: [RouteStop] = []
     var skipped: [SkippedLoad] = []
+
+    /// Pickups and drop-offs, not the yard at either end.
+    var workingStopCount: Int {
+        stops.filter { $0.kind == .pickup || $0.kind == .dropoff }.count
+    }
 
     var totalDistance: CLLocationDistance {
         stops.compactMap(\.distance).reduce(0, +)

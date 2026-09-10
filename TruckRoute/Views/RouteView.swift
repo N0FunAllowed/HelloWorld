@@ -79,7 +79,7 @@ struct RouteView: View {
                     RouteStopRow(index: index, stop: stop)
                 }
             } header: {
-                Text("\(route.stops.count - 1) stops")
+                Text("\(route.workingStopCount) stops")
             } footer: {
                 RouteSummary(route: route)
             }
@@ -188,7 +188,7 @@ private struct RouteStopRow: View {
 
     private var color: Color {
         switch stop.kind {
-        case .start: .gray
+        case .start, .end: .gray
         case .pickup: .blue
         case .dropoff: .green
         }

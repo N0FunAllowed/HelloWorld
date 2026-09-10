@@ -26,7 +26,7 @@ struct RouteMapView: View {
 
     private func tint(for kind: StopKind) -> Color {
         switch kind {
-        case .start: .gray
+        case .start, .end: .gray
         case .pickup: .blue
         case .dropoff: .green
         }

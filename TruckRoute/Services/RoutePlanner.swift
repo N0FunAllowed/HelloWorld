@@ -112,6 +112,20 @@ final class RoutePlanner {
             }
         }
 
+        // The empty run home is real deadhead, so the day isn't costed
+        // honestly without it.
+        if stops.count > 1 {
+            stops.append(RouteStop(
+                kind: .end,
+                placeName: homeBase.displayName,
+                address: homeBase.address,
+                coordinate: start,
+                loadReference: nil,
+                day: nil,
+                loadRate: nil
+            ))
+        }
+
         route = PlannedRoute(stops: stops, skipped: skipped)
         await measureLegs()
     }
