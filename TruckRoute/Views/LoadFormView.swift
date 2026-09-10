@@ -15,6 +15,7 @@ struct LoadFormView: View {
     @State private var hasDeliveryDate = false
     @State private var deliveryDate = Date.now
     @State private var notes = ""
+    @State private var rateText = ""
 
     private var canSave: Bool { pickup != nil && dropoff != nil }
 
@@ -40,6 +41,15 @@ struct LoadFormView: View {
                     if hasDeliveryDate {
                         DatePicker("Deliver by", selection: $deliveryDate)
                     }
+                }
+
+                Section {
+                    TextField("Rate", text: $rateText)
+                        .keyboardType(.decimalPad)
+                } header: {
+                    Text("Pay")
+                } footer: {
+                    Text("What the load pays. The route works out your rate per mile across loaded and empty miles.")
                 }
 
                 Section("Details") {
@@ -79,6 +89,9 @@ struct LoadFormView: View {
         dropoff = load.dropoff
         pickupDate = load.pickupDate
         notes = load.notes
+        if let rate = load.rate {
+            rateText = rate.formatted(.number.precision(.fractionLength(0...2)))
+        }
         if let delivery = load.deliveryDate {
             hasDeliveryDate = true
             deliveryDate = delivery
@@ -98,6 +111,9 @@ struct LoadFormView: View {
         target.pickupDate = pickupDate
         target.deliveryDate = hasDeliveryDate ? deliveryDate : nil
         target.notes = notes
+        // Tolerate "$2,400" and the like.
+        let digits = rateText.filter { $0.isNumber || $0 == "." }
+        target.rate = digits.isEmpty ? nil : Double(digits)
 
         dismiss()
     }

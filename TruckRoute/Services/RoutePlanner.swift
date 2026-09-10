@@ -72,7 +72,8 @@ final class RoutePlanner {
             address: homeBase.address,
             coordinate: start,
             loadReference: nil,
-            day: nil
+            day: nil,
+            loadRate: nil
         )]
 
         let calendar = Calendar.current
@@ -95,7 +96,8 @@ final class RoutePlanner {
                     address: entry.load.pickup?.address ?? "",
                     coordinate: entry.pickup,
                     loadReference: entry.load.displayName,
-                    day: day
+                    day: day,
+                    loadRate: entry.load.rate
                 ))
                 stops.append(RouteStop(
                     kind: .dropoff,
@@ -103,7 +105,8 @@ final class RoutePlanner {
                     address: entry.load.dropoff?.address ?? "",
                     coordinate: entry.dropoff,
                     loadReference: entry.load.displayName,
-                    day: day
+                    day: day,
+                    loadRate: entry.load.rate
                 ))
                 current = entry.dropoff
             }
@@ -153,6 +156,16 @@ final class RoutePlanner {
             }
             route = working
         }
+
+        // A load's miles are the empty run to its pickup plus the loaded run to
+        // its drop-off. Stops are built pickup-then-drop-off, so the leg before
+        // a drop-off is always that load's deadhead.
+        for index in working.stops.indices where working.stops[index].kind == .dropoff {
+            let loaded = working.stops[index].distance ?? 0
+            let empty = index > 0 ? (working.stops[index - 1].distance ?? 0) : 0
+            working.stops[index].allMiles = loaded + empty
+        }
+        route = working
     }
 
     private func distance(

@@ -9,6 +9,8 @@ final class Load {
     var pickupDate: Date
     var deliveryDate: Date?
     var notes: String
+    /// What the load pays, before any costs. Nil when it isn't known yet.
+    var rate: Double?
 
     init(
         reference: String = "",
@@ -16,7 +18,8 @@ final class Load {
         dropoff: Place? = nil,
         pickupDate: Date = .now,
         deliveryDate: Date? = nil,
-        notes: String = ""
+        notes: String = "",
+        rate: Double? = nil
     ) {
         self.reference = reference
         self.pickup = pickup
@@ -24,6 +27,7 @@ final class Load {
         self.pickupDate = pickupDate
         self.deliveryDate = deliveryDate
         self.notes = notes
+        self.rate = rate
     }
 
     var displayName: String {

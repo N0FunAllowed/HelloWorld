@@ -11,8 +11,13 @@ struct RouteMapView: View {
                     .tint(tint(for: stop.kind))
 
                 if let polyline = stop.polyline {
-                    MapPolyline(polyline)
-                        .stroke(.blue, lineWidth: 4)
+                    if stop.isDeadheadLeg {
+                        MapPolyline(polyline)
+                            .stroke(.orange, style: StrokeStyle(lineWidth: 3, dash: [6, 5]))
+                    } else {
+                        MapPolyline(polyline)
+                            .stroke(.blue, lineWidth: 4)
+                    }
                 }
             }
         }

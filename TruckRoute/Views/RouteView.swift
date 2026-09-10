@@ -81,7 +81,7 @@ struct RouteView: View {
             } header: {
                 Text("\(route.stops.count - 1) stops")
             } footer: {
-                Text("\(Format.miles(route.totalDistance)) · \(Format.duration(route.totalTravelTime)) driving")
+                RouteSummary(route: route)
             }
 
             if !route.skipped.isEmpty {
@@ -105,6 +105,23 @@ struct RouteView: View {
     }
 }
 
+private struct RouteSummary: View {
+    let route: PlannedRoute
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text("\(Format.miles(route.totalDistance)) · \(Format.duration(route.totalTravelTime)) driving")
+            if route.emptyDistance > 0, let share = route.deadheadShare {
+                Text("\(Format.miles(route.loadedDistance)) loaded · \(Format.miles(route.emptyDistance)) empty (\(Format.percent(share)) deadhead)")
+            }
+            if let total = route.totalRate, let perMile = route.ratePerMile {
+                Text("\(Format.money(total)) · \(Format.perMile(perMile)) all miles")
+                    .fontWeight(.semibold)
+            }
+        }
+    }
+}
+
 private struct RouteStopRow: View {
     let index: Int
     let stop: RouteStop
@@ -112,9 +129,16 @@ private struct RouteStopRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             if let travelTime = stop.travelTime, let distance = stop.distance {
-                Text("Drive \(Format.miles(distance)) · \(Format.duration(travelTime))")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    if stop.isDeadheadLeg {
+                        Image(systemName: "arrow.right.to.line")
+                        Text("Empty \(Format.miles(distance)) · \(Format.duration(travelTime))")
+                    } else {
+                        Text("Loaded \(Format.miles(distance)) · \(Format.duration(travelTime))")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(stop.isDeadheadLeg ? Color.orange : Color.secondary)
             } else if index > 0 {
                 Text("No driving route found")
                     .font(.caption)
@@ -140,6 +164,12 @@ private struct RouteStopRow: View {
                         Text(Format.day(day))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                    }
+                    if let rate = stop.loadRate, stop.kind == .dropoff {
+                        Text(stop.ratePerMile.map { "\(Format.money(rate)) · \(Format.perMile($0))" }
+                            ?? Format.money(rate))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.green)
                     }
                 }
 

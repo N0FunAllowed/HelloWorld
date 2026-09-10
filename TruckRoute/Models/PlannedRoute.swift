@@ -24,12 +24,31 @@ struct RouteStop: Identifiable {
     let coordinate: CLLocationCoordinate2D
     let loadReference: String?
     let day: Date?
+    /// What the load this stop belongs to pays. Nil on the start.
+    let loadRate: Double?
 
     /// Drive from the previous stop to this one. Nil for the start, or if
     /// MapKit couldn't find a road route.
     var travelTime: TimeInterval?
     var distance: CLLocationDistance?
     var polyline: MKPolyline?
+
+    /// Every leg driven to earn this load: the empty run to its pickup plus
+    /// the loaded run to its drop-off. Set on drop-off stops once legs are
+    /// measured.
+    var allMiles: CLLocationDistance?
+
+    /// The leg arriving here is empty — the truck is running to a pickup with
+    /// nothing on it. Empty miles earn nothing, so they're what separates a
+    /// good rate from a bad one.
+    var isDeadheadLeg: Bool { kind == .pickup }
+
+    /// Rate per mile measured against all miles, loaded and empty, which is how
+    /// owner-operators judge a load.
+    var ratePerMile: Double? {
+        guard let loadRate, let allMiles, allMiles > 0 else { return nil }
+        return loadRate / (allMiles / 1609.344)
+    }
 }
 
 /// A load left out of the route, because it has no pickup or drop-off set or
@@ -50,5 +69,30 @@ struct PlannedRoute {
 
     var totalTravelTime: TimeInterval {
         stops.compactMap(\.travelTime).reduce(0, +)
+    }
+
+    var loadedDistance: CLLocationDistance {
+        stops.filter { !$0.isDeadheadLeg }.compactMap(\.distance).reduce(0, +)
+    }
+
+    var emptyDistance: CLLocationDistance {
+        stops.filter(\.isDeadheadLeg).compactMap(\.distance).reduce(0, +)
+    }
+
+    var deadheadShare: Double? {
+        guard totalDistance > 0 else { return nil }
+        return emptyDistance / totalDistance
+    }
+
+    /// Nil when no load on the route has a rate entered.
+    var totalRate: Double? {
+        let rates = stops.filter { $0.kind == .dropoff }.compactMap(\.loadRate)
+        return rates.isEmpty ? nil : rates.reduce(0, +)
+    }
+
+    /// Revenue over every mile of the route, empty ones included.
+    var ratePerMile: Double? {
+        guard let totalRate, totalDistance > 0 else { return nil }
+        return totalRate / (totalDistance / 1609.344)
     }
 }

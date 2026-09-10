@@ -29,17 +29,24 @@ second per address.
 
 ### What it does
 
-- **Loads tab** — add, edit and delete loads. Each one is a pickup address, a
-  drop-off address, a pickup date/time, an optional delivery deadline, and a
-  reference plus notes. Everything is stored on the device with SwiftData; there
-  is no server and no account.
+- **Addresses tab** — the address book. Yards, customers and docks are entered
+  once, with notes for gate codes or dock hours. Typing an address searches
+  Apple Maps, and picking a suggestion confirms it against a real location and
+  keeps its coordinate, so it never has to be looked up again.
+- **Loads tab** — add, edit and delete loads. Each one picks a pickup and a
+  drop-off from the address book, plus a pickup date/time, an optional delivery
+  deadline, what it pays, and a reference and notes. Everything is stored on the
+  device with SwiftData; there is no server and no account.
 - **Route tab** — turns the week's loads into an ordered run. Addresses are
   geocoded once and cached, loads are grouped by pickup day, and within each day
   the next stop is whichever remaining pickup is closest to where the truck
   currently sits. Each leg is then measured with MapKit for real drive time and
   distance, drawn on a map, and every stop has a button to hand off to Apple
-  Maps for turn-by-turn.
-- **Settings tab** — your yard address. Every route starts there.
+  Maps for turn-by-turn. Empty legs — running to a pickup with nothing on —
+  are marked as deadhead, and each load shows its rate per mile measured over
+  loaded *and* empty miles, which is the number that decides whether a load was
+  worth taking.
+- **Settings tab** — which address is your yard. Every route starts there.
 
 ### Scope
 

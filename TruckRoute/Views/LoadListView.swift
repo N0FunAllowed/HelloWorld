@@ -75,9 +75,14 @@ private struct LoadRow: View {
             }
             Label(load.pickup?.displayName ?? "No pickup set", systemImage: "arrow.up.circle")
             Label(load.dropoff?.displayName ?? "No drop-off set", systemImage: "arrow.down.circle")
-            Text(load.pickupDate.formatted(date: .omitted, time: .shortened))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            HStack(spacing: 6) {
+                Text(load.pickupDate.formatted(date: .omitted, time: .shortened))
+                if let rate = load.rate {
+                    Text(Format.money(rate)).foregroundStyle(.green)
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
         .font(.subheadline)
     }
