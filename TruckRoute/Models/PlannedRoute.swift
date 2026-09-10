@@ -19,6 +19,7 @@ enum StopKind {
 struct RouteStop: Identifiable {
     let id = UUID()
     let kind: StopKind
+    let placeName: String
     let address: String
     let coordinate: CLLocationCoordinate2D
     let loadReference: String?
@@ -31,7 +32,8 @@ struct RouteStop: Identifiable {
     var polyline: MKPolyline?
 }
 
-/// A load left out of the route because an address wouldn't geocode.
+/// A load left out of the route, because it has no pickup or drop-off set or
+/// because an address wouldn't geocode.
 struct SkippedLoad: Identifiable {
     let id = UUID()
     let reference: String

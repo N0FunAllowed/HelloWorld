@@ -4,17 +4,21 @@ import MapKit
 
 struct RouteView: View {
     @Query(sort: \Load.pickupDate) private var loads: [Load]
-    @AppStorage("homeBase") private var homeBase = ""
+    @Query private var places: [Place]
     @State private var planner = RoutePlanner()
+
+    private var homeBase: Place? {
+        places.first(where: \.isHomeBase)
+    }
 
     var body: some View {
         NavigationStack {
             Group {
-                if homeBase.trimmed.isEmpty {
+                if homeBase == nil {
                     ContentUnavailableView(
                         "Set your home base",
                         systemImage: "house",
-                        description: Text("The route starts from your yard. Add its address in Settings.")
+                        description: Text("The route starts from your yard. Pick it in Settings.")
                     )
                 } else if loads.isEmpty {
                     ContentUnavailableView(
@@ -96,7 +100,8 @@ struct RouteView: View {
     }
 
     private func planRoute() {
-        Task { await planner.plan(loads: loads, startingFrom: homeBase.trimmed) }
+        guard let homeBase else { return }
+        Task { await planner.plan(loads: loads, from: homeBase) }
     }
 }
 
@@ -125,8 +130,12 @@ private struct RouteStopRow: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(stop.kind.label)\(stop.loadReference.map { " · \($0)" } ?? "")")
-                        .font(.subheadline.bold())
-                    Text(stop.address).font(.subheadline)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(stop.placeName).font(.subheadline.bold())
+                    Text(stop.address)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     if let day = stop.day {
                         Text(Format.day(day))
                             .font(.caption)
@@ -157,7 +166,7 @@ private struct RouteStopRow: View {
 
     private func openInMaps() {
         let item = MKMapItem(placemark: MKPlacemark(coordinate: stop.coordinate))
-        item.name = stop.address
+        item.name = stop.placeName.isEmpty ? stop.address : stop.placeName
         item.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
         ])

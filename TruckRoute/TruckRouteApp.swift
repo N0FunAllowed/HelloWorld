@@ -7,7 +7,7 @@ struct TruckRouteApp: App {
         WindowGroup {
             ContentView()
         }
-        .modelContainer(for: Load.self)
+        .modelContainer(for: [Load.self, Place.self])
     }
 }
 
@@ -18,6 +18,8 @@ struct ContentView: View {
                 .tabItem { Label("Loads", systemImage: "shippingbox") }
             RouteView()
                 .tabItem { Label("Route", systemImage: "map") }
+            PlaceListView()
+                .tabItem { Label("Addresses", systemImage: "book.closed") }
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gear") }
         }

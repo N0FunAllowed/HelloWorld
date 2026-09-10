@@ -9,25 +9,30 @@ struct LoadFormView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var reference = ""
-    @State private var pickupAddress = ""
-    @State private var dropoffAddress = ""
+    @State private var pickup: Place?
+    @State private var dropoff: Place?
     @State private var pickupDate = Date.now
     @State private var hasDeliveryDate = false
     @State private var deliveryDate = Date.now
     @State private var notes = ""
 
-    private var canSave: Bool {
-        !pickupAddress.trimmed.isEmpty && !dropoffAddress.trimmed.isEmpty
-    }
+    private var canSave: Bool { pickup != nil && dropoff != nil }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Route") {
-                    TextField("Pick up at", text: $pickupAddress, axis: .vertical)
-                    TextField("Drop off at", text: $dropoffAddress, axis: .vertical)
+                    NavigationLink {
+                        PlacePicker(title: "Pick Up At", selection: $pickup)
+                    } label: {
+                        PlaceRowLabel(role: "Pick up at", place: pickup)
+                    }
+                    NavigationLink {
+                        PlacePicker(title: "Drop Off At", selection: $dropoff)
+                    } label: {
+                        PlaceRowLabel(role: "Drop off at", place: dropoff)
+                    }
                 }
-                .textInputAutocapitalization(.words)
 
                 Section("Schedule") {
                     DatePicker("Pickup", selection: $pickupDate)
@@ -39,6 +44,7 @@ struct LoadFormView: View {
 
                 Section("Details") {
                     TextField("Reference or customer", text: $reference)
+                        .textInputAutocapitalization(.words)
                     TextField("Notes", text: $notes, axis: .vertical)
                         .lineLimit(3...)
                 }
@@ -69,8 +75,8 @@ struct LoadFormView: View {
     private func loadExisting() {
         guard let load else { return }
         reference = load.reference
-        pickupAddress = load.pickupAddress
-        dropoffAddress = load.dropoffAddress
+        pickup = load.pickup
+        dropoff = load.dropoff
         pickupDate = load.pickupDate
         notes = load.notes
         if let delivery = load.deliveryDate {
@@ -86,17 +92,9 @@ struct LoadFormView: View {
             return new
         }()
 
-        // A changed address invalidates the cached coordinate.
-        if target.pickupAddress != pickupAddress.trimmed {
-            target.pickupCoordinate = nil
-        }
-        if target.dropoffAddress != dropoffAddress.trimmed {
-            target.dropoffCoordinate = nil
-        }
-
         target.reference = reference.trimmed
-        target.pickupAddress = pickupAddress.trimmed
-        target.dropoffAddress = dropoffAddress.trimmed
+        target.pickup = pickup
+        target.dropoff = dropoff
         target.pickupDate = pickupDate
         target.deliveryDate = hasDeliveryDate ? deliveryDate : nil
         target.notes = notes

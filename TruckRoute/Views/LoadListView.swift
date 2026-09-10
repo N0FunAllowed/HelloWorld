@@ -73,8 +73,8 @@ private struct LoadRow: View {
             if !load.reference.isEmpty {
                 Text(load.reference).font(.headline)
             }
-            Label(load.pickupAddress, systemImage: "arrow.up.circle")
-            Label(load.dropoffAddress, systemImage: "arrow.down.circle")
+            Label(load.pickup?.displayName ?? "No pickup set", systemImage: "arrow.up.circle")
+            Label(load.dropoff?.displayName ?? "No drop-off set", systemImage: "arrow.down.circle")
             Text(load.pickupDate.formatted(date: .omitted, time: .shortened))
                 .font(.caption)
                 .foregroundStyle(.secondary)

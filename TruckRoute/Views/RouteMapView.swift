@@ -7,7 +7,7 @@ struct RouteMapView: View {
     var body: some View {
         Map(initialPosition: .region(region)) {
             ForEach(Array(stops.enumerated()), id: \.element.id) { index, stop in
-                Marker("\(index). \(stop.kind.label)", coordinate: stop.coordinate)
+                Marker("\(index). \(stop.placeName)", coordinate: stop.coordinate)
                     .tint(tint(for: stop.kind))
 
                 if let polyline = stop.polyline {
