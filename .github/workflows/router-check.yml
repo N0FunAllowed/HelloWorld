@@ -2,8 +2,18 @@ name: Router checks
 
 on:
   pull_request:
+    paths:
+      - "scripts/**"
+      - "tests/**"
+      - "config/**"
+      - ".github/workflows/router-check.yml"
   push:
     branches: [master]
+    paths:
+      - "scripts/**"
+      - "tests/**"
+      - "config/**"
+      - ".github/workflows/router-check.yml"
   workflow_call:
 
 permissions:

@@ -2,11 +2,10 @@
   "version": 1,
   "roles": {
     "planner": {"provider": "openai", "model": "gpt-5.6-sol", "purpose": "product, specification, planning, architecture decisions"},
-    "implementer": {"provider": "codex", "model": "Codex", "purpose": "repository edits, debugging, refactors, tests"},
+    "implementer": {"provider": "openai", "model": "Codex", "purpose": "repository edits, debugging, refactors, tests"},
     "reviewer": {"provider": "anthropic", "model": "Claude", "purpose": "independent review and architecture critique"},
     "utility": {"provider": "openai", "model": "gpt-5.6-luna", "purpose": "low-risk summaries and formatting"}
   },
-  "risk_thresholds": {"low": 0, "medium": 3, "high": 6, "critical": 9},
   "categories": {
     "documentation": {"keywords": ["documentation", "readme", "release notes", "format", "summarize"], "risk": "low", "stack": ["utility"], "review_required": false},
     "ui_tweak": {"keywords": ["ui", "button", "label", "color", "layout", "small tweak"], "risk": "low", "stack": ["implementer"], "review_required": false},

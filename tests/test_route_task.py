@@ -20,5 +20,12 @@ class RouterTests(unittest.TestCase):
         d = route("Format and summarize release notes documentation")
         self.assertEqual(d["category"], "documentation")
         self.assertEqual(d["primary"]["role"], "utility")
+    def test_whole_word_matching_avoids_substring_false_positives(self):
+        d = route("New requirement: add better error messages")
+        self.assertNotEqual(d["category"], "ui_tweak")
+    def test_tie_breaks_toward_higher_risk_category(self):
+        d = route("Format the api")
+        self.assertEqual(d["category"], "architecture")
+        self.assertTrue(d["review_required"])
 
 if __name__ == "__main__": unittest.main()

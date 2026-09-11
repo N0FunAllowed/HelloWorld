@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """Offline, deterministic first-pass router. Configure behavior in config/router.json."""
-import argparse, json
+import argparse, json, re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+RISK_ORDER = {"low": 0, "medium": 1, "high": 2, "critical": 3}
 
 def route(description, config_path=ROOT / "config" / "router.json"):
     config = json.loads(Path(config_path).read_text(encoding="utf-8"))
-    text = description.lower()
+    tokens = set(re.findall(r"[a-z0-9]+", description.lower()))
     matches = []
     for name, rule in config["categories"].items():
-        hits = [word for word in rule["keywords"] if word in text]
+        hits = [word for word in rule["keywords"] if set(word.split()) <= tokens]
         if hits:
-            matches.append((len(hits), name, rule, hits))
+            matches.append((len(hits), RISK_ORDER.get(rule["risk"], 0), name, rule, hits))
     if matches:
-        _, category, rule, hits = max(matches, key=lambda item: item[0])
+        _, _, category, rule, hits = max(matches, key=lambda item: (item[0], item[1]))
     else:
         category, rule, hits = config["defaults"]["category"], config["defaults"], []
     stack = rule["stack"]
