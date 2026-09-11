@@ -1,0 +1,30 @@
+name: Development task
+description: Start a GitHub-tracked task for the AI router.
+title: "[Task]: "
+labels: ["task"]
+
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What outcome is needed?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints and risk
+      description: Include compatibility, privacy, and rollout concerns.
+
+  - type: textarea
+    id: router
+    attributes:
+      label: Router decision
+      description: Paste output from scripts/route_task.py.
