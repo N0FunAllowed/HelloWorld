@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "roles": {
+    "planner": {"provider": "openai", "model": "gpt-5.6-sol", "purpose": "product, specification, planning, architecture decisions"},
+    "implementer": {"provider": "codex", "model": "Codex", "purpose": "repository edits, debugging, refactors, tests"},
+    "reviewer": {"provider": "anthropic", "model": "Claude", "purpose": "independent review and architecture critique"},
+    "utility": {"provider": "openai", "model": "gpt-5.6-luna", "purpose": "low-risk summaries and formatting"}
+  },
+  "risk_thresholds": {"low": 0, "medium": 3, "high": 6, "critical": 9},
+  "categories": {
+    "documentation": {"keywords": ["documentation", "readme", "release notes", "format", "summarize"], "risk": "low", "stack": ["utility"], "review_required": false},
+    "ui_tweak": {"keywords": ["ui", "button", "label", "color", "layout", "small tweak"], "risk": "low", "stack": ["implementer"], "review_required": false},
+    "bug": {"keywords": ["bug", "crash", "broken", "regression", "unclear", "fails"], "risk": "medium", "stack": ["planner", "implementer", "reviewer"], "review_required": true},
+    "architecture": {"keywords": ["architecture", "redesign", "migration", "database", "security", "auth", "api", "major"], "risk": "high", "stack": ["planner", "reviewer", "planner", "implementer", "reviewer"], "review_required": true}
+  },
+  "defaults": {"category": "implementation", "risk": "medium", "stack": ["planner", "implementer", "reviewer"], "review_required": true, "never_auto_merge": true}
+}

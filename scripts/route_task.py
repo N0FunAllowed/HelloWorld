@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+"""Offline, deterministic first-pass router. Configure behavior in config/router.json."""
+import argparse, json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+def route(description, config_path=ROOT / "config" / "router.json"):
+    config = json.loads(Path(config_path).read_text(encoding="utf-8"))
+    text = description.lower()
+    matches = []
+    for name, rule in config["categories"].items():
+        hits = [word for word in rule["keywords"] if word in text]
+        if hits:
+            matches.append((len(hits), name, rule, hits))
+    if matches:
+        _, category, rule, hits = max(matches, key=lambda item: item[0])
+    else:
+        category, rule, hits = config["defaults"]["category"], config["defaults"], []
+    stack = rule["stack"]
+    roles = config["roles"]
+    primary = stack[0]
+    return {
+        "category": category,
+        "risk_level": rule["risk"],
+        "primary": {"role": primary, **roles[primary]},
+        "implementation_role": next(({"role": r, **roles[r]} for r in stack if r == "implementer"), None),
+        "reviewer": next(({"role": r, **roles[r]} for r in reversed(stack) if r == "reviewer"), None),
+        "role_stack": [{"role": r, "model": roles[r]["model"]} for r in stack],
+        "review_required": rule["review_required"],
+        "never_auto_merge": config["defaults"]["never_auto_merge"],
+        "reasoning": "Matched: " + (", ".join(hits) if hits else "no category keywords; using default policy")
+    }
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Return a structured AI development routing decision.")
+    parser.add_argument("description")
+    parser.add_argument("--config", type=Path, default=ROOT / "config" / "router.json")
+    args = parser.parse_args()
+    print(json.dumps(route(args.description, args.config), indent=2))
