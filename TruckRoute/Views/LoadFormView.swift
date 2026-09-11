@@ -57,12 +57,14 @@ struct LoadFormView: View {
                     Text("What the load pays. The route works out your rate per mile across loaded and empty miles.")
                 }
 
-                Section("Estimated costs") {
+                Section {
                     MoneyField("Fuel", text: $fuelCostText)
                     MoneyField("Tolls", text: $tollCostText)
                     MoneyField("Permits", text: $permitCostText)
                     MoneyField("Driver pay", text: $driverPayText)
                     MoneyField("Other", text: $otherCostText)
+                } header: {
+                    Text("Estimated costs")
                 } footer: {
                     Text("Costs are estimates for this load. Profit is payment minus these costs.")
                 }
