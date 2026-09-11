@@ -137,6 +137,9 @@ struct PlaceFormView: View {
     private func loadExisting() {
         guard let place else { return }
         name = place.name
+        // Setting address fires onChange, which would otherwise treat this
+        // like a fresh edit and wipe the coordinate right back out below.
+        isApplyingSuggestion = true
         address = place.address
         notes = place.notes
         confirmed = place.coordinate
