@@ -28,6 +28,8 @@ struct RouteStop: Identifiable {
     let day: Date?
     /// What the load this stop belongs to pays. Nil on the start.
     let loadRate: Double?
+    /// Estimated operating cost for the load. Nil on the start and end.
+    let loadCost: Double?
 
     /// Drive from the previous stop to this one. Nil for the start, or if
     /// MapKit couldn't find a road route.
@@ -95,6 +97,34 @@ struct PlannedRoute {
     var totalRate: Double? {
         let rates = stops.filter { $0.kind == .dropoff }.compactMap(\.loadRate)
         return rates.isEmpty ? nil : rates.reduce(0, +)
+    }
+
+    var totalCost: Double? {
+        let costs = stops.filter { $0.kind == .dropoff }.compactMap(\.loadCost)
+        return costs.isEmpty ? nil : costs.reduce(0, +)
+    }
+
+    /// Rate paired with cost for each drop-off that has a rate entered, so
+    /// profit is never charged the cost of a load whose payment isn't known
+    /// yet.
+    private var ratedDropoffs: [(rate: Double, cost: Double)] {
+        stops.filter { $0.kind == .dropoff }.compactMap { stop in
+            guard let rate = stop.loadRate, let cost = stop.loadCost else { return nil }
+            return (rate, cost)
+        }
+    }
+
+    /// Nil when no load on the route has a rate entered. Only counts loads
+    /// with a known rate, so an unpriced load's cost never gets subtracted
+    /// from another load's revenue.
+    var totalProfit: Double? {
+        guard !ratedDropoffs.isEmpty else { return nil }
+        return ratedDropoffs.reduce(0) { $0 + ($1.rate - $1.cost) }
+    }
+
+    var profitMargin: Double? {
+        guard let totalRate, totalRate > 0, let totalProfit else { return nil }
+        return totalProfit / totalRate
     }
 
     /// Revenue over every mile of the route, empty ones included.

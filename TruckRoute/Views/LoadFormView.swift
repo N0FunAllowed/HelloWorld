@@ -16,6 +16,11 @@ struct LoadFormView: View {
     @State private var deliveryDate = Date.now
     @State private var notes = ""
     @State private var rateText = ""
+    @State private var fuelCostText = ""
+    @State private var tollCostText = ""
+    @State private var permitCostText = ""
+    @State private var driverPayText = ""
+    @State private var otherCostText = ""
 
     private var canSave: Bool { pickup != nil && dropoff != nil }
 
@@ -50,6 +55,18 @@ struct LoadFormView: View {
                     Text("Pay")
                 } footer: {
                     Text("What the load pays. The route works out your rate per mile across loaded and empty miles.")
+                }
+
+                Section {
+                    MoneyField("Fuel", text: $fuelCostText)
+                    MoneyField("Tolls", text: $tollCostText)
+                    MoneyField("Permits", text: $permitCostText)
+                    MoneyField("Driver pay", text: $driverPayText)
+                    MoneyField("Other", text: $otherCostText)
+                } header: {
+                    Text("Estimated costs")
+                } footer: {
+                    Text("Costs are estimates for this load. Profit is payment minus these costs.")
                 }
 
                 Section("Details") {
@@ -92,6 +109,11 @@ struct LoadFormView: View {
         if let rate = load.rate {
             rateText = rate.formatted(.number.precision(.fractionLength(0...2)))
         }
+        fuelCostText = load.fuelCost.moneyText
+        tollCostText = load.tollCost.moneyText
+        permitCostText = load.permitCost.moneyText
+        driverPayText = load.driverPay.moneyText
+        otherCostText = load.otherCost.moneyText
         if let delivery = load.deliveryDate {
             hasDeliveryDate = true
             deliveryDate = delivery
@@ -111,16 +133,46 @@ struct LoadFormView: View {
         target.pickupDate = pickupDate
         target.deliveryDate = hasDeliveryDate ? deliveryDate : nil
         target.notes = notes
-        // Tolerate "$2,400" and the like.
-        let digits = rateText.filter { $0.isNumber || $0 == "." }
-        target.rate = digits.isEmpty ? nil : Double(digits)
+        target.rate = rateText.moneyValue
+        target.fuelCost = fuelCostText.moneyValue ?? 0
+        target.tollCost = tollCostText.moneyValue ?? 0
+        target.permitCost = permitCostText.moneyValue ?? 0
+        target.driverPay = driverPayText.moneyValue ?? 0
+        target.otherCost = otherCostText.moneyValue ?? 0
 
         dismiss()
+    }
+}
+
+private struct MoneyField: View {
+    let title: String
+    @Binding var text: String
+
+    init(_ title: String, text: Binding<String>) {
+        self.title = title
+        _text = text
+    }
+
+    var body: some View {
+        TextField(title, text: $text)
+            .keyboardType(.decimalPad)
     }
 }
 
 extension String {
     var trimmed: String {
         trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Tolerates values such as "$2,400" and blank values.
+    var moneyValue: Double? {
+        let digits = filter { $0.isNumber || $0 == "." }
+        return digits.isEmpty ? nil : Double(digits)
+    }
+}
+
+private extension Double {
+    var moneyText: String {
+        formatted(.number.precision(.fractionLength(0...2)))
     }
 }

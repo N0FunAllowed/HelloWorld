@@ -118,6 +118,16 @@ private struct RouteSummary: View {
                 Text("\(Format.money(total)) · \(Format.perMile(perMile)) all miles")
                     .fontWeight(.semibold)
             }
+            if let cost = route.totalCost {
+                Text("Costs \(Format.money(cost))")
+                    .foregroundStyle(.secondary)
+            }
+            if let profit = route.totalProfit {
+                Text(route.profitMargin.map { "Profit \(Format.money(profit)) · \(Format.percent($0)) margin" }
+                    ?? "Profit \(Format.money(profit))")
+                    .fontWeight(.semibold)
+                    .foregroundStyle(profit >= 0 ? .green : .red)
+            }
         }
     }
 }
@@ -170,6 +180,11 @@ private struct RouteStopRow: View {
                             ?? Format.money(rate))
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.green)
+                        if let cost = stop.loadCost {
+                            Text("Cost \(Format.money(cost))")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
 
