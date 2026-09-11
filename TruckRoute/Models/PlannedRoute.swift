@@ -104,9 +104,22 @@ struct PlannedRoute {
         return costs.isEmpty ? nil : costs.reduce(0, +)
     }
 
+    /// Rate paired with cost for each drop-off that has a rate entered, so
+    /// profit is never charged the cost of a load whose payment isn't known
+    /// yet.
+    private var ratedDropoffs: [(rate: Double, cost: Double)] {
+        stops.filter { $0.kind == .dropoff }.compactMap { stop in
+            guard let rate = stop.loadRate, let cost = stop.loadCost else { return nil }
+            return (rate, cost)
+        }
+    }
+
+    /// Nil when no load on the route has a rate entered. Only counts loads
+    /// with a known rate, so an unpriced load's cost never gets subtracted
+    /// from another load's revenue.
     var totalProfit: Double? {
-        guard let totalRate, let totalCost else { return nil }
-        return totalRate - totalCost
+        guard !ratedDropoffs.isEmpty else { return nil }
+        return ratedDropoffs.reduce(0) { $0 + ($1.rate - $1.cost) }
     }
 
     var profitMargin: Double? {
