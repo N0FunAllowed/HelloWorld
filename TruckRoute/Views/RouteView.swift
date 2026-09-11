@@ -3,13 +3,19 @@ import SwiftData
 import MapKit
 
 struct RouteView: View {
-    @Query(sort: \Load.pickupDate) private var loads: [Load]
+    @Query(sort: \Load.pickupDate) private var allLoads: [Load]
     @Query private var places: [Place]
     @AppStorage(DistanceUnit.storageKey) private var unit = DistanceUnit.miles
     @State private var planner = RoutePlanner()
 
     private var homeBase: Place? {
         places.first(where: \.isHomeBase)
+    }
+
+    /// Delivered loads are done; routing only what's still outstanding is what
+    /// keeps replanning meaningful as loads pile up over time.
+    private var loads: [Load] {
+        allLoads.filter { !$0.isDelivered }
     }
 
     var body: some View {

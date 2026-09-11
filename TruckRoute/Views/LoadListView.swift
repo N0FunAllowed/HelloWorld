@@ -6,6 +6,11 @@ struct LoadListView: View {
     @Query(sort: \Load.pickupDate) private var loads: [Load]
     @State private var editing: Load?
     @State private var isAdding = false
+    @State private var showDelivered = false
+
+    private var visibleLoads: [Load] {
+        showDelivered ? loads : loads.filter { !$0.isDelivered }
+    }
 
     var body: some View {
         NavigationStack {
@@ -16,6 +21,12 @@ struct LoadListView: View {
                         systemImage: "shippingbox",
                         description: Text("Add this week's loads and the Route tab will order them for you.")
                     )
+                } else if visibleLoads.isEmpty {
+                    ContentUnavailableView(
+                        "All caught up",
+                        systemImage: "checkmark.circle",
+                        description: Text("Every load is delivered.")
+                    )
                 } else {
                     list
                 }
@@ -24,6 +35,9 @@ struct LoadListView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button("Add load", systemImage: "plus") { isAdding = true }
+                }
+                ToolbarItem(placement: .secondaryAction) {
+                    Toggle("Show delivered", isOn: $showDelivered)
                 }
             }
             .sheet(isPresented: $isAdding) {
@@ -46,10 +60,16 @@ struct LoadListView: View {
                             LoadRow(load: load)
                         }
                         .buttonStyle(.plain)
-                    }
-                    .onDelete { offsets in
-                        for index in offsets {
-                            context.delete(group.loads[index])
+                        .swipeActions(edge: .leading) {
+                            Button(load.isDelivered ? "Mark planned" : "Mark delivered") {
+                                load.isDelivered.toggle()
+                            }
+                            .tint(load.isDelivered ? .orange : .green)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button("Delete", role: .destructive) {
+                                context.delete(load)
+                            }
                         }
                     }
                 }
@@ -59,7 +79,7 @@ struct LoadListView: View {
 
     private var groupedByDay: [(day: Date, loads: [Load])] {
         let calendar = Calendar.current
-        return Dictionary(grouping: loads) { calendar.startOfDay(for: $0.pickupDate) }
+        return Dictionary(grouping: visibleLoads) { calendar.startOfDay(for: $0.pickupDate) }
             .map { (day: $0.key, loads: $0.value.sorted { $0.pickupDate < $1.pickupDate }) }
             .sorted { $0.day < $1.day }
     }
@@ -80,10 +100,16 @@ private struct LoadRow: View {
                 if let rate = load.rate {
                     Text(Format.money(rate)).foregroundStyle(.green)
                 }
+                if load.isDelivered {
+                    Label("Delivered", systemImage: "checkmark.circle.fill")
+                        .labelStyle(.iconOnly)
+                        .foregroundStyle(.green)
+                }
             }
             .font(.caption)
             .foregroundStyle(.secondary)
         }
         .font(.subheadline)
+        .opacity(load.isDelivered ? 0.5 : 1)
     }
 }

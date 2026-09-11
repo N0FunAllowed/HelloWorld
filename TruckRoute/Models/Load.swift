@@ -11,6 +11,9 @@ final class Load {
     var notes: String
     /// What the load pays, before any costs. Nil when it isn't known yet.
     var rate: Double?
+    /// Delivered loads are done — kept for the record, but out of the way of
+    /// both the working list and route planning.
+    var isDelivered: Bool
 
     init(
         reference: String = "",
@@ -19,7 +22,8 @@ final class Load {
         pickupDate: Date = .now,
         deliveryDate: Date? = nil,
         notes: String = "",
-        rate: Double? = nil
+        rate: Double? = nil,
+        isDelivered: Bool = false
     ) {
         self.reference = reference
         self.pickup = pickup
@@ -28,6 +32,7 @@ final class Load {
         self.deliveryDate = deliveryDate
         self.notes = notes
         self.rate = rate
+        self.isDelivered = isDelivered
     }
 
     var displayName: String {

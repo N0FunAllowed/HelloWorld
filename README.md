@@ -36,7 +36,9 @@ second per address.
   keeps its coordinate, so it never has to be looked up again.
 - **Loads tab** — add, edit and delete loads. Each one picks a pickup and a
   drop-off from the address book, plus a pickup date/time, an optional delivery
-  deadline, what it pays, and a reference and notes. Everything is stored on the
+  deadline, what it pays, and a reference and notes. Swipe a load to mark it
+  delivered; delivered loads drop out of the list and out of routing, and stay
+  out of the way behind a "Show delivered" toggle. Everything is stored on the
   device with SwiftData; there is no server and no account.
 - **Route tab** — turns the week's loads into an ordered run. Addresses are
   geocoded once and cached, loads are grouped by pickup day, and within each day

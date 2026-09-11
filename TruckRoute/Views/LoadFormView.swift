@@ -35,6 +35,13 @@ struct LoadFormView: View {
                     }
                 }
 
+                if let pickup, pickup === dropoff {
+                    Section {
+                        Label("Pickup and drop-off are the same address.", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                    }
+                }
+
                 Section("Schedule") {
                     DatePicker("Pickup", selection: $pickupDate)
                     Toggle("Delivery deadline", isOn: $hasDeliveryDate.animation())
