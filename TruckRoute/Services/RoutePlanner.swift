@@ -73,7 +73,8 @@ final class RoutePlanner {
             coordinate: start,
             loadReference: nil,
             day: nil,
-            loadRate: nil
+            loadRate: nil,
+            loadCost: nil
         )]
 
         let calendar = Calendar.current
@@ -97,7 +98,8 @@ final class RoutePlanner {
                     coordinate: entry.pickup,
                     loadReference: entry.load.displayName,
                     day: day,
-                    loadRate: entry.load.rate
+                    loadRate: entry.load.rate,
+                    loadCost: entry.load.totalCost
                 ))
                 stops.append(RouteStop(
                     kind: .dropoff,
@@ -106,7 +108,8 @@ final class RoutePlanner {
                     coordinate: entry.dropoff,
                     loadReference: entry.load.displayName,
                     day: day,
-                    loadRate: entry.load.rate
+                    loadRate: entry.load.rate,
+                    loadCost: entry.load.totalCost
                 ))
                 current = entry.dropoff
             }
@@ -122,7 +125,8 @@ final class RoutePlanner {
                 coordinate: start,
                 loadReference: nil,
                 day: nil,
-                loadRate: nil
+                loadRate: nil,
+                loadCost: nil
             ))
         }
 

@@ -83,6 +83,15 @@ private struct LoadRow: View {
             }
             .font(.caption)
             .foregroundStyle(.secondary)
+            if let profit = load.profit {
+                Text("Cost \(Format.money(load.totalCost)) · Profit \(Format.money(profit))")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(profit >= 0 ? .green : .red)
+            } else if load.totalCost > 0 {
+                Text("Cost \(Format.money(load.totalCost))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .font(.subheadline)
     }
