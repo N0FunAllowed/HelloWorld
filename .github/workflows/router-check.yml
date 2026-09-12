@@ -3,28 +3,21 @@ name: Router checks
 on:
   pull_request:
     paths:
-      - "scripts/**"
-      - "tests/**"
-      - "config/**"
+      - "scripts/route_task.py"
+      - "tests/test_route_task.py"
+      - "config/router.json"
       - ".github/workflows/router-check.yml"
   push:
     branches: [master]
     paths:
-      - "scripts/**"
-      - "tests/**"
-      - "config/**"
+      - "scripts/route_task.py"
+      - "tests/test_route_task.py"
+      - "config/router.json"
       - ".github/workflows/router-check.yml"
-  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
-  test-router:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python -m unittest discover -s tests -v
+  router-check:
+    uses: N0FunAllowed/AI-Dev-Workflows/.github/workflows/router-check.yml@v1
