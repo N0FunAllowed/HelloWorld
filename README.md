@@ -34,9 +34,10 @@ second per address.
   once, with notes for gate codes or dock hours. Typing an address searches
   Apple Maps, and picking a suggestion confirms it against a real location and
   keeps its coordinate, so it never has to be looked up again.
-- **Loads tab** — add, edit and delete loads. Each one picks a pickup and a
-  drop-off from the address book, plus a pickup date/time, an optional delivery
-  deadline, what it pays, and a reference and notes. Swipe a load to mark it
+- **Loads tab** — add, edit and delete loads (deleting asks first). Each one
+  picks a pickup and a drop-off from a searchable address book, plus a pickup
+  date/time, an optional delivery deadline, what it pays, and a reference and
+  notes. The tab shows what's outstanding at a glance. Swipe a load to mark it
   delivered; delivered loads drop out of the list and out of routing, and stay
   out of the way behind a "Show delivered" toggle. Everything is stored on the
   device with SwiftData; there is no server and no account.

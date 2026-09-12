@@ -7,9 +7,16 @@ struct LoadListView: View {
     @State private var editing: Load?
     @State private var isAdding = false
     @State private var showDelivered = false
+    @State private var pendingDeletion: Load?
 
     private var visibleLoads: [Load] {
         showDelivered ? loads : loads.filter { !$0.isDelivered }
+    }
+
+    /// What's still outstanding, so it's visible without planning a route.
+    private var outstandingTotal: Double? {
+        let rates = loads.filter { !$0.isDelivered }.compactMap(\.rate)
+        return rates.isEmpty ? nil : rates.reduce(0, +)
     }
 
     var body: some View {
@@ -46,11 +53,32 @@ struct LoadListView: View {
             .sheet(item: $editing) { load in
                 LoadFormView(load: load)
             }
+            .confirmationDialog(
+                pendingDeletion.map { "Delete \($0.displayName)?" } ?? "",
+                isPresented: Binding(
+                    get: { pendingDeletion != nil },
+                    set: { if !$0 { pendingDeletion = nil } }
+                ),
+                presenting: pendingDeletion
+            ) { load in
+                Button("Delete", role: .destructive) { context.delete(load) }
+            }
         }
     }
 
     private var list: some View {
         List {
+            if let outstandingTotal {
+                Section {
+                    HStack {
+                        Text("Outstanding")
+                        Spacer()
+                        Text(Format.money(outstandingTotal)).foregroundStyle(.green)
+                    }
+                    .font(.subheadline.weight(.semibold))
+                }
+            }
+
             ForEach(groupedByDay, id: \.day) { group in
                 Section(Format.day(group.day)) {
                     ForEach(group.loads) { load in
@@ -68,7 +96,7 @@ struct LoadListView: View {
                         }
                         .swipeActions(edge: .trailing) {
                             Button("Delete", role: .destructive) {
-                                context.delete(load)
+                                pendingDeletion = load
                             }
                         }
                     }
