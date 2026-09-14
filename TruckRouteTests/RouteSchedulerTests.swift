@@ -56,16 +56,16 @@ final class RouteSchedulerTests: XCTestCase {
         XCTAssertTrue(calendar.isDate(arrival, inSameDayAs: pickupDay))
     }
 
-    func testADayWithNoEarlyWindowStartsAtTheDefaultDayStartHour() throws {
+    func testADayWithNoEarlyWindowStartsAtTheDefaultDayStartHourPlusTravel() throws {
         let pickupDay = date(2, 0)
         let stops = [
             stop(.start),
-            stop(.pickup, day: pickupDay, travelTime: 1800),
+            stop(.pickup, day: pickupDay, travelTime: 1800), // 30 min to the first stop.
         ]
 
         let scheduled = RouteScheduler.schedule(stops)
         let arrival = try XCTUnwrap(scheduled[1].scheduledArrival)
-        XCTAssertEqual(arrival, date(2, RouteScheduler.defaultDayStartHour))
+        XCTAssertEqual(arrival, date(2, RouteScheduler.defaultDayStartHour, 30))
     }
 
     // MARK: Multi-day routes
@@ -77,7 +77,8 @@ final class RouteSchedulerTests: XCTestCase {
             stop(.start),
             stop(.pickup, day: day1, windowStart: date(0, 9), serviceDurationMinutes: 30, travelTime: 3600),
             stop(.dropoff, day: day1, serviceDurationMinutes: 30, travelTime: 3600),
-            // Even though day 1 ran until the evening, day 2 starts fresh at 8am.
+            // Even though day 1 ran until the evening, day 2 starts fresh at
+            // 8am — plus the 30 min drive to this first stop.
             stop(.pickup, day: day2, travelTime: 1800),
         ]
 
@@ -87,7 +88,7 @@ final class RouteSchedulerTests: XCTestCase {
         XCTAssertTrue(calendar.isDate(day1DropoffDeparture, inSameDayAs: day1))
 
         let day2Arrival = try XCTUnwrap(scheduled[3].scheduledArrival)
-        XCTAssertEqual(day2Arrival, date(1, RouteScheduler.defaultDayStartHour))
+        XCTAssertEqual(day2Arrival, date(1, RouteScheduler.defaultDayStartHour, 30))
     }
 
     // MARK: Waiting for a window

@@ -31,14 +31,19 @@ enum RouteScheduler {
             var stop = result[index]
             let stopDay = stop.day.map { calendar.startOfDay(for: $0) }
 
+            // A new operating day resets the clock to that day's start — but
+            // resetting it is not a substitute for the drive to get here:
+            // the two used to be an if/else, which meant the first stop of
+            // any day looked like it arrived with no travel time at all and
+            // could read as on-time when it was actually running late.
             if let stopDay {
                 let isNewOperatingDay = clock.map { calendar.startOfDay(for: $0) != stopDay } ?? true
                 if isNewOperatingDay {
                     clock = dayStart(for: stopDay, calendar: calendar)
-                } else if index > 0, let travelTime = stop.travelTime, let current = clock {
-                    clock = current.addingTimeInterval(travelTime)
                 }
-            } else if index > 0, let travelTime = stop.travelTime, let current = clock {
+            }
+
+            if index > 0, let travelTime = stop.travelTime, let current = clock {
                 clock = current.addingTimeInterval(travelTime)
             }
 
