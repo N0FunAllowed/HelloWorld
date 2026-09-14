@@ -1,10 +1,17 @@
 import Foundation
 
 enum Format {
-    static func miles(_ meters: Double) -> String {
-        let measurement = Measurement(value: meters, unit: UnitLength.meters)
-        return measurement.formatted(
-            .measurement(width: .abbreviated, usage: .road)
+    /// The chosen unit rather than the locale's road units, so a distance
+    /// never disagrees with the "/mi" or "/km" on the rate beside it.
+    static func distance(_ meters: Double, in unit: DistanceUnit) -> String {
+        let converted = Measurement(value: meters, unit: UnitLength.meters)
+            .converted(to: unit.unitLength)
+        return converted.formatted(
+            .measurement(
+                width: .abbreviated,
+                usage: .asProvided,
+                numberFormatStyle: .number.precision(.fractionLength(0))
+            )
         )
     }
 
@@ -22,8 +29,9 @@ enum Format {
         amount.formatted(.currency(code: currencyCode).precision(.fractionLength(0)))
     }
 
-    static func perMile(_ amount: Double) -> String {
-        "\(amount.formatted(.currency(code: currencyCode).precision(.fractionLength(2))))/mi"
+    static func rate(_ amount: Double, per unit: DistanceUnit) -> String {
+        let money = amount.formatted(.currency(code: currencyCode).precision(.fractionLength(2)))
+        return "\(money)/\(unit.abbreviation)"
     }
 
     static func percent(_ fraction: Double) -> String {
