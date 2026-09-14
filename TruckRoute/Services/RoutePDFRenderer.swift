@@ -67,7 +67,14 @@ enum RoutePDFRenderer {
                 draw("\(index). \(stop.kind.label) — \(stop.placeName)", font: headerFont, context)
                 draw(stop.address, font: bodyFont, context)
 
-                if let arrival = stop.scheduledArrival {
+                if stop.hasUnknownSchedule {
+                    draw(
+                        "Scheduled time unknown — the drive to this stop couldn't be measured",
+                        font: bodyFont,
+                        color: .systemOrange,
+                        context
+                    )
+                } else if let arrival = stop.scheduledArrival {
                     let scheduleLine = "Scheduled \(arrival.formatted(date: .abbreviated, time: .shortened))"
                     draw(scheduleLine, font: bodyFont, color: stop.isLate ? .systemRed : .black, context)
                     if stop.isLate {
@@ -100,7 +107,8 @@ enum RoutePDFRenderer {
             }
 
             let lateStops = route.stops.enumerated().filter { $0.element.isLate }
-            if !lateStops.isEmpty {
+            let unknownStops = route.stops.enumerated().filter { $0.element.hasUnknownSchedule }
+            if !lateStops.isEmpty || !unknownStops.isEmpty {
                 cursor += 8
                 draw("Scheduling warnings", font: headerFont, context)
                 for (index, stop) in lateStops {
@@ -108,6 +116,14 @@ enum RoutePDFRenderer {
                         "• Stop \(index), \(stop.placeName): scheduled after its deadline.",
                         font: bodyFont,
                         color: .systemRed,
+                        context
+                    )
+                }
+                for (index, stop) in unknownStops {
+                    draw(
+                        "• Stop \(index), \(stop.placeName): no arrival time — the drive to it couldn't be measured.",
+                        font: bodyFont,
+                        color: .systemOrange,
                         context
                     )
                 }

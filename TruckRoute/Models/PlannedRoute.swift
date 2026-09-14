@@ -71,11 +71,18 @@ struct RouteStop: Identifiable {
     var polyline: MKPolyline?
 
     /// When the truck is scheduled to reach this stop and to leave it again,
-    /// filled in by `RouteScheduler` once legs are measured. Nil until then.
+    /// filled in by `RouteScheduler` once legs are measured. Nil until then,
+    /// and nil when `hasUnknownSchedule` is true.
     var scheduledArrival: Date?
     var scheduledDeparture: Date?
-    /// True when the scheduled arrival is after `deadline`.
+    /// True when the scheduled arrival is after `deadline`. Always false when
+    /// the schedule is unknown — an arrival nobody can work out isn't late,
+    /// and it certainly isn't on time.
     var isLate: Bool = false
+    /// True when the drive to this stop, or to something before it that day,
+    /// was never measured, so there's no honest arrival time to give. Distinct
+    /// from the yard start, which simply has no schedule to report.
+    var hasUnknownSchedule: Bool = false
 
     /// Every leg driven to earn this load: the empty run to its pickup plus
     /// the loaded run to its drop-off. Set on drop-off stops once legs are
@@ -133,6 +140,14 @@ struct PlannedRoute {
     /// quietly reporting a number that's too good.
     var unmeasuredLegs: Int {
         stops.dropFirst().filter { $0.distance == nil }.count
+    }
+
+    /// Stops whose arrival can't be worked out because a drive time is
+    /// missing. Separate from `unmeasuredLegs`, which counts the mileage
+    /// those same gaps cost: one unmeasured leg can leave several later
+    /// stops unschedulable.
+    var stopsWithUnknownSchedule: Int {
+        stops.filter(\.hasUnknownSchedule).count
     }
 
     var deadheadShare: Double? {

@@ -12,10 +12,10 @@ enum RouteScheduler {
     /// When a working day starts if nothing says otherwise.
     static let defaultDayStartHour = 8
 
-    /// Returns the same stops with `scheduledArrival`, `scheduledDeparture`
-    /// and `isLate` filled in.
+    /// Returns the same stops with `scheduledArrival`, `scheduledDeparture`,
+    /// `isLate` and `hasUnknownSchedule` filled in.
     ///
-    /// The clock only ever advances from a stop's own `day` — never from the
+    /// The clock only ever anchors from a stop's own `day` — never from the
     /// yard stops at either end, which carry no day of their own. That's what
     /// keeps a route whose first load is days out from being scheduled as if
     /// it started this morning: nothing anchors the clock until the first
@@ -26,25 +26,51 @@ enum RouteScheduler {
     ) -> [RouteStop] {
         var result = stops
         var clock: Date?
+        /// The operating day the clock is currently working through. Tracked
+        /// separately from the clock itself on purpose: a day's work can run
+        /// past midnight, and deriving the operating day from the clock's own
+        /// calendar day would then see the next same-day stop as a new day
+        /// and reset the clock backwards to that morning.
+        var activeOperatingDay: Date?
+        /// Set once a leg's drive time is missing. Everything downstream of
+        /// that within the same operating day is a guess, so it's reported as
+        /// unknown rather than as an optimistic time.
+        var scheduleIsUnknown = false
 
         for index in result.indices {
             var stop = result[index]
             let stopDay = stop.day.map { calendar.startOfDay(for: $0) }
 
-            // A new operating day resets the clock to that day's start — but
-            // resetting it is not a substitute for the drive to get here:
-            // the two used to be an if/else, which meant the first stop of
-            // any day looked like it arrived with no travel time at all and
-            // could read as on-time when it was actually running late.
-            if let stopDay {
-                let isNewOperatingDay = clock.map { calendar.startOfDay(for: $0) != stopDay } ?? true
-                if isNewOperatingDay {
-                    clock = dayStart(for: stopDay, calendar: calendar)
+            // Reset only when the stop's *assigned* operating day advances.
+            if let stopDay, stopDay != activeOperatingDay {
+                activeOperatingDay = stopDay
+                clock = dayStart(for: stopDay, calendar: calendar)
+                // A new day is anchored to its own start rather than to how
+                // the previous one finished, so an earlier unmeasured leg
+                // stops mattering from here.
+                scheduleIsUnknown = false
+            }
+
+            // Resetting the clock for a new day is not a substitute for the
+            // drive to get here: the two were once an if/else, which made the
+            // first stop of any day look like it arrived with no travel at all.
+            if index > 0 {
+                if let travelTime = stop.travelTime {
+                    clock = clock?.addingTimeInterval(travelTime)
+                } else {
+                    scheduleIsUnknown = true
                 }
             }
 
-            if index > 0, let travelTime = stop.travelTime, let current = clock {
-                clock = current.addingTimeInterval(travelTime)
+            guard !scheduleIsUnknown else {
+                stop.hasUnknownSchedule = true
+                stop.scheduledArrival = nil
+                stop.scheduledDeparture = nil
+                // An unknown arrival can't be called late — or on time.
+                stop.isLate = false
+                clock = nil
+                result[index] = stop
+                continue
             }
 
             // Arriving before the window opens just means waiting for it.
@@ -52,6 +78,7 @@ enum RouteScheduler {
                 clock = windowStart
             }
 
+            stop.hasUnknownSchedule = false
             stop.scheduledArrival = clock
 
             if let deadline = stop.deadline, let arrival = clock {

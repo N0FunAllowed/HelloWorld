@@ -143,6 +143,10 @@ private struct RouteSummary: View {
                 Text("\(route.unmeasuredLegs) leg\(route.unmeasuredLegs == 1 ? "" : "s") couldn't be measured, so these totals are low.")
                     .foregroundStyle(.orange)
             }
+            if route.stopsWithUnknownSchedule > 0 {
+                Text("\(route.stopsWithUnknownSchedule) stop\(route.stopsWithUnknownSchedule == 1 ? "" : "s") have no arrival time, because the drive to them couldn't be measured.")
+                    .foregroundStyle(.orange)
+            }
         }
     }
 }
@@ -191,7 +195,11 @@ private struct RouteStopRow: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    if let arrival = stop.scheduledArrival {
+                    if stop.hasUnknownSchedule {
+                        Label("Arrival unknown — drive time unavailable", systemImage: "questionmark.circle")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    } else if let arrival = stop.scheduledArrival {
                         Label(
                             arrival.formatted(date: .omitted, time: .shortened),
                             systemImage: stop.isLate ? "exclamationmark.triangle.fill" : "clock"
