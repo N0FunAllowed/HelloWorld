@@ -44,7 +44,8 @@ final class LoadCoordinateResolverTests: XCTestCase {
 
         XCTAssertEqual(resolved.latitude, sanFrancisco.latitude, accuracy: 0.0001)
         XCTAssertEqual(geocoder.lookups, ["1 Dock Rd"])
-        XCTAssertEqual(place.coordinate?.latitude, sanFrancisco.latitude ?? 0, accuracy: 0.0001)
+        let cached = try XCTUnwrap(place.coordinate)
+        XCTAssertEqual(cached.latitude, sanFrancisco.latitude, accuracy: 0.0001)
     }
 
     /// Editing a place clears its cached coordinate (see `PlaceFormView.save`)
@@ -59,7 +60,8 @@ final class LoadCoordinateResolverTests: XCTestCase {
         let place = Place(name: "Yard", address: "1 Old Dock Rd")
 
         _ = try await resolver.resolve(place)
-        XCTAssertEqual(place.coordinate?.latitude, sanFrancisco.latitude ?? 0, accuracy: 0.0001)
+        let cachedBeforeEdit = try XCTUnwrap(place.coordinate)
+        XCTAssertEqual(cachedBeforeEdit.latitude, sanFrancisco.latitude, accuracy: 0.0001)
 
         // Simulate PlaceFormView.save(): address changes, cached coordinate clears.
         place.address = "2 New Dock Rd"
