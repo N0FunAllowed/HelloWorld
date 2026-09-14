@@ -48,6 +48,16 @@ struct RouteView: View {
             }
             .navigationTitle("Route")
             .toolbar {
+                if let route = planner.route, !route.stops.isEmpty {
+                    ToolbarItem(placement: .primaryAction) {
+                        ShareLink(
+                            item: RouteShareDocument(route: route, unit: unit),
+                            preview: SharePreview("Route sheet")
+                        ) {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                        }
+                    }
+                }
                 if planner.route != nil {
                     ToolbarItem(placement: .primaryAction) {
                         Button("Replan", systemImage: "arrow.clockwise", action: planRoute)
@@ -180,6 +190,14 @@ private struct RouteStopRow: View {
                         Text(Format.day(day))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                    }
+                    if let arrival = stop.scheduledArrival {
+                        Label(
+                            arrival.formatted(date: .omitted, time: .shortened),
+                            systemImage: stop.isLate ? "exclamationmark.triangle.fill" : "clock"
+                        )
+                        .font(.caption)
+                        .foregroundStyle(stop.isLate ? Color.red : Color.secondary)
                     }
                     if let rate = stop.loadRate, stop.kind == .dropoff {
                         Text(stop.rate(per: unit).map { "\(Format.money(rate)) · \(Format.rate($0, per: unit))" }

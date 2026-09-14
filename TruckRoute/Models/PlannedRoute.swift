@@ -29,11 +29,53 @@ struct RouteStop: Identifiable {
     /// What the load this stop belongs to pays. Nil on the start.
     let loadRate: Double?
 
+    /// The earliest this stop can be worked — arriving before this means
+    /// waiting. Nil means no window, so any arrival time is fine.
+    let windowStart: Date?
+    /// The latest this stop should be worked. Nil means no deadline. For a
+    /// drop-off this is the delivery window's end if one was set, otherwise
+    /// the load's plain delivery deadline — see `Load.deliveryWindowEnd`.
+    let deadline: Date?
+    /// How long the truck sits here before it can leave. Zero for the yard
+    /// stops at either end of the route.
+    let serviceDurationMinutes: Int
+
+    init(
+        kind: StopKind,
+        placeName: String,
+        address: String,
+        coordinate: CLLocationCoordinate2D,
+        loadReference: String?,
+        day: Date?,
+        loadRate: Double?,
+        windowStart: Date? = nil,
+        deadline: Date? = nil,
+        serviceDurationMinutes: Int = 0
+    ) {
+        self.kind = kind
+        self.placeName = placeName
+        self.address = address
+        self.coordinate = coordinate
+        self.loadReference = loadReference
+        self.day = day
+        self.loadRate = loadRate
+        self.windowStart = windowStart
+        self.deadline = deadline
+        self.serviceDurationMinutes = serviceDurationMinutes
+    }
+
     /// Drive from the previous stop to this one. Nil for the start, or if
     /// MapKit couldn't find a road route.
     var travelTime: TimeInterval?
     var distance: CLLocationDistance?
     var polyline: MKPolyline?
+
+    /// When the truck is scheduled to reach this stop and to leave it again,
+    /// filled in by `RouteScheduler` once legs are measured. Nil until then.
+    var scheduledArrival: Date?
+    var scheduledDeparture: Date?
+    /// True when the scheduled arrival is after `deadline`.
+    var isLate: Bool = false
 
     /// Every leg driven to earn this load: the empty run to its pickup plus
     /// the loaded run to its drop-off. Set on drop-off stops once legs are

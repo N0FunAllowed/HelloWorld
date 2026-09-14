@@ -11,6 +11,12 @@ final class RoutePlanner {
     private(set) var progressNote: String?
     private(set) var errorMessage: String?
 
+    private let coordinateResolver: LoadCoordinateResolver
+
+    init(coordinateResolver: LoadCoordinateResolver = .live) {
+        self.coordinateResolver = coordinateResolver
+    }
+
     /// Orders the week's loads and measures each leg.
     ///
     /// Loads are grouped by pickup day so the truck never runs a Friday load on
@@ -35,7 +41,7 @@ final class RoutePlanner {
         progressNote = "Looking up addresses…"
         let start: CLLocationCoordinate2D
         do {
-            start = try await resolveCoordinate(for: homeBase)
+            start = try await coordinateResolver.resolve(homeBase)
         } catch {
             errorMessage = "Couldn't find the address for \(homeBase.displayName), your home base."
             return
@@ -55,8 +61,8 @@ final class RoutePlanner {
             do {
                 routable.append((
                     load,
-                    try await resolveCoordinate(for: pickup),
-                    try await resolveCoordinate(for: dropoff)
+                    try await coordinateResolver.resolve(pickup),
+                    try await coordinateResolver.resolve(dropoff)
                 ))
             } catch {
                 skipped.append(SkippedLoad(
@@ -97,7 +103,10 @@ final class RoutePlanner {
                     coordinate: entry.pickup,
                     loadReference: entry.load.displayName,
                     day: day,
-                    loadRate: entry.load.rate
+                    loadRate: entry.load.rate,
+                    windowStart: entry.load.pickupDate,
+                    deadline: entry.load.pickupWindowEnd,
+                    serviceDurationMinutes: entry.load.serviceDurationMinutes
                 ))
                 stops.append(RouteStop(
                     kind: .dropoff,
@@ -106,7 +115,10 @@ final class RoutePlanner {
                     coordinate: entry.dropoff,
                     loadReference: entry.load.displayName,
                     day: day,
-                    loadRate: entry.load.rate
+                    loadRate: entry.load.rate,
+                    windowStart: entry.load.deliveryWindowStart,
+                    deadline: entry.load.deliveryWindowEnd ?? entry.load.deliveryDate,
+                    serviceDurationMinutes: entry.load.serviceDurationMinutes
                 ))
                 current = entry.dropoff
             }
@@ -139,15 +151,6 @@ final class RoutePlanner {
         errorMessage = nil
     }
 
-    /// Geocodes a place once and caches the result on it, so replanning and
-    /// other loads using the same place cost nothing.
-    private func resolveCoordinate(for place: Place) async throws -> CLLocationCoordinate2D {
-        if let cached = place.coordinate { return cached }
-        let coordinate = try await GeocodingService.shared.coordinate(for: place.address)
-        place.coordinate = coordinate
-        return coordinate
-    }
-
     /// Fills in drive time, distance and the drawable polyline for each leg.
     /// A leg that MapKit can't route (islands, bad address, throttling) stays
     /// nil rather than falling back to a straight line that would understate
@@ -177,6 +180,8 @@ final class RoutePlanner {
             let empty = index > 0 ? (working.stops[index - 1].distance ?? 0) : 0
             working.stops[index].allMiles = loaded + empty
         }
+
+        working.stops = RouteScheduler.schedule(working.stops)
         route = working
     }
 
